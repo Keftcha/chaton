@@ -1,5 +1,7 @@
 package main
 
+//go:generate protoc --go_out=. --go-grpc_out=. ./services.proto
+
 import (
 	"context"
 	"fmt"
