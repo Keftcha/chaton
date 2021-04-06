@@ -1,0 +1,16 @@
+syntax = "proto3";
+package chaton;
+
+option go_package = "generated/";
+
+service Greeter {
+    rpc Greeting (GreetingsRequest) returns (GreetingsResponse) {}
+}
+
+message GreetingsRequest {
+    string name = 1;
+}
+
+message GreetingsResponse {
+    string msg = 1;
+}
