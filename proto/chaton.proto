@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package chaton;
+
+option go_package = "../grpc/";
+
+service Chaton {
+    rpc Connect (stream Msg) returns (stream Msg) {}
+}
+
+message Msg {
+    string content = 1;
+}
