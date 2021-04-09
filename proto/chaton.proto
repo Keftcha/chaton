@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package chaton;
 
-option go_package = "./";
+option go_package = "./chaton";
 
 service Chaton {
     rpc Connect (stream Event) returns (stream Event) {}

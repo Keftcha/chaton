@@ -1,6 +1,6 @@
 package main
 
-//go:generate protoc --go_out=../grpc/chaton/ --go-grpc_out=../grpc/chaton/ -I ../proto/ ../proto/chaton.proto
+//go:generate protoc --go_out=../grpc/ --go-grpc_out=../grpc/ -I ../proto/ ../proto/chaton.proto
 
 import (
 	"fmt"
@@ -10,45 +10,44 @@ import (
 
 	"google.golang.org/grpc"
 
-	chaton "github.com/keftcha/chaton/grpc"
+	"github.com/keftcha/chaton/grpc/chaton"
 )
 
-type message struct {
+type event struct {
 	client chaton.Chaton_ConnectServer
-	msg    *chaton.Msg
+	event  *chaton.Event
 }
 
 // ChatonServer implements the Chaton service
 type ChatonServer struct {
 	chaton.UnimplementedChatonServer
 
-	// Messages sended
-	msgs chan<- message
+	// Events sended
+	es chan<- event
 	// Client streams
 	streams []chaton.Chaton_ConnectServer
 }
 
 // newChatonServer create a new ChatonServer service
 func newChatonServer() *ChatonServer {
-	c := make(chan message)
+	c := make(chan event)
 	s := &ChatonServer{
-		msgs: c,
+		es: c,
 	}
-	go broadcasting(c)
+	go eventRouting(c)
 	return s
 }
 
 // Connect implements the chaton interface
 func (s *ChatonServer) Connect(stream chaton.Chaton_ConnectServer) error {
-	m := message{
+	// Initialise the client of the event
+	e := event{
 		client: stream,
-		msg:    &chaton.Msg{Content: "¤$£"},
 	}
-	s.msgs <- m
 
 	// Infinite loop that recieve messages
 	for {
-		msg, err := stream.Recv()
+		in, err := stream.Recv()
 		if err == io.EOF {
 			return nil
 		}
@@ -57,25 +56,44 @@ func (s *ChatonServer) Connect(stream chaton.Chaton_ConnectServer) error {
 		}
 
 		// Add the new message to the channel queue
-		m.msg = msg
-		s.msgs <- m
+		e.event = in
+		s.es <- e
 	}
 }
 
-func broadcasting(c <-chan message) {
+func eventRouting(c <-chan event) {
 	clients := make([]chaton.Chaton_ConnectServer, 0)
-	_ = clients
 
 	// Loop on messages in channel
-	for m := range c {
+	for e := range c {
+		// Switch on the event
+		switch e.event.Type {
 		// A new client has arrived
-		if m.msg.Content == "¤$£" {
-			clients = append(clients, m.client)
+		case chaton.MsgType_CONNECT:
+			clients = append(clients, e.client)
+			broadcasting(
+				clients,
+				&chaton.Event{
+					Type: chaton.MsgType_MESSAGE,
+					Msg: &chaton.Msg{
+						Content: "A new boi has arrived",
+					},
+				},
+			)
 			continue
+		case chaton.MsgType_SET_NICKNAME:
+		case chaton.MsgType_MESSAGE:
+		case chaton.MsgType_QUIT:
+		case chaton.MsgType_ME:
+		case chaton.MsgType_LIST:
 		}
-		for _, c := range clients {
-			c.Send(m.msg)
-		}
+
+	}
+}
+
+func broadcasting(cs []chaton.Chaton_ConnectServer, e *chaton.Event) {
+	for _, c := range cs {
+		c.Send(e)
 	}
 }
 
