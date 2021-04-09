@@ -1,6 +1,6 @@
 package main
 
-//go:generate protoc --go_out=../grpc/ --go-grpc_out=../grpc/ -I ../proto ../proto/chaton.proto
+//go:generate protoc --go_out=../grpc/chaton/ --go-grpc_out=../grpc/chaton/ -I ../proto/ ../proto/chaton.proto
 
 import (
 	"fmt"

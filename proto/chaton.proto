@@ -2,12 +2,27 @@ syntax = "proto3";
 
 package chaton;
 
-option go_package = "../grpc/";
+option go_package = "./";
 
 service Chaton {
-    rpc Connect (stream Msg) returns (stream Msg) {}
+    rpc Connect (stream Event) returns (stream Event) {}
 }
 
 message Msg {
     string content = 1;
+}
+
+message Event {
+    MsgType type = 1;
+    Msg msg = 2;
+}
+
+enum MsgType {
+    CONNECT = 0; // Open the connection with the server
+    SET_NICKNAME = 1; // Set the client nickname
+    MESSAGE = 2; // Send a message
+    QUIT = 3; // Leave the server
+    ME = 4; // Send action message
+    LIST = 5; // List users connected on the server
+    TO = 6; // Send message only visible by mentioned users
 }
