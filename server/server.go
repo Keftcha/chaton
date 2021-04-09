@@ -10,12 +10,18 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/google/uuid"
 	"github.com/keftcha/chaton/grpc/chaton"
 )
 
 type event struct {
-	client chaton.Chaton_ConnectServer
+	client *client
 	event  *chaton.Event
+}
+
+type client struct {
+	stream chaton.Chaton_ConnectServer
+	nick   string
 }
 
 // ChatonServer implements the Chaton service
@@ -24,8 +30,6 @@ type ChatonServer struct {
 
 	// Events sended
 	es chan<- event
-	// Client streams
-	streams []chaton.Chaton_ConnectServer
 }
 
 // newChatonServer create a new ChatonServer service
@@ -42,7 +46,10 @@ func newChatonServer() *ChatonServer {
 func (s *ChatonServer) Connect(stream chaton.Chaton_ConnectServer) error {
 	// Initialise the client of the event
 	e := event{
-		client: stream,
+		client: &client{
+			stream: stream,
+			nick:   "",
+		},
 	}
 
 	// Infinite loop that recieve messages
@@ -62,7 +69,7 @@ func (s *ChatonServer) Connect(stream chaton.Chaton_ConnectServer) error {
 }
 
 func eventRouting(c <-chan event) {
-	clients := make([]chaton.Chaton_ConnectServer, 0)
+	var clients []*client
 
 	// Loop on messages in channel
 	for e := range c {
@@ -70,19 +77,30 @@ func eventRouting(c <-chan event) {
 		switch e.event.Type {
 		// A new client has arrived
 		case chaton.MsgType_CONNECT:
+			// Generate random name for the client
+			id, _ := uuid.NewRandom()
+			e.client.nick = id.String()
 			clients = append(clients, e.client)
+			// Prevent other users that a new client has arrived
 			broadcasting(
 				clients,
-				&chaton.Event{
-					Type: chaton.MsgType_MESSAGE,
-					Msg: &chaton.Msg{
-						Content: "A new boi has arrived",
+				event{
+					event: &chaton.Event{
+						Type: chaton.MsgType_MESSAGE,
+						Msg: &chaton.Msg{
+							Content: "A new boi has arrived",
+						},
+					},
+					client: &client{
+						stream: nil,
+						nick:   "Server say",
 					},
 				},
 			)
-			continue
 		case chaton.MsgType_SET_NICKNAME:
+		// Client send message
 		case chaton.MsgType_MESSAGE:
+			broadcasting(clients, e)
 		case chaton.MsgType_QUIT:
 		case chaton.MsgType_ME:
 		case chaton.MsgType_LIST:
@@ -91,9 +109,11 @@ func eventRouting(c <-chan event) {
 	}
 }
 
-func broadcasting(cs []chaton.Chaton_ConnectServer, e *chaton.Event) {
+func broadcasting(cs []*client, e event) {
 	for _, c := range cs {
-		c.Send(e)
+		// Put the sender name as the message author
+		e.event.Msg.Author = e.client.nick
+		c.stream.Send(e.event)
 	}
 }
 

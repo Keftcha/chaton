@@ -10,6 +10,7 @@ service Chaton {
 
 message Msg {
     string content = 1;
+    string author = 2;
 }
 
 message Event {

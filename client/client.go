@@ -42,7 +42,7 @@ func connect(c chaton.ChatonClient) {
 				return
 			}
 
-			fmt.Println(recv.Msg.Content)
+			fmt.Println(recv.Msg.Author, recv.Msg.Content)
 		}
 	}()
 
