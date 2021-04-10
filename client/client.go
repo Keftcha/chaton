@@ -60,10 +60,13 @@ func join(c chaton.ChatonClient) {
 		if len(msg) == 0 {
 			continue
 		}
-
 		msgType := chaton.MsgType_MESSAGE
-		if msg[0] == "/nick" {
+		switch msg[0] {
+		case "/nick":
 			msgType = chaton.MsgType_SET_NICKNAME
+			content = strings.Join(msg[1:], " ")
+		case "/me":
+			msgType = chaton.MsgType_ME
 			content = strings.Join(msg[1:], " ")
 		}
 
