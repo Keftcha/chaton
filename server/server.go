@@ -97,7 +97,32 @@ func eventRouting(c <-chan event) {
 					},
 				},
 			)
+		// Client change his nickname
 		case chaton.MsgType_SET_NICKNAME:
+			// The new nickname is the content of the message
+			newNick := e.event.Msg.Content
+			// Prevent other users that the client has changed his nickname
+			broadcasting(
+				clients,
+				event{
+					event: &chaton.Event{
+						Type: chaton.MsgType_MESSAGE,
+						Msg: &chaton.Msg{
+							Content: fmt.Sprintf(
+								"%s change his nickname to %s",
+								e.client.nick,
+								newNick,
+							),
+						},
+					},
+					client: &client{
+						stream: nil,
+						nick:   "Server say",
+					},
+				},
+			)
+			// Change the nickname
+			e.client.nick = newNick
 		// Client send message
 		case chaton.MsgType_MESSAGE:
 			broadcasting(clients, e)

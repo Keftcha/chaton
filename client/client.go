@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"google.golang.org/grpc"
 
@@ -27,6 +28,17 @@ func connect(c chaton.ChatonClient) {
 		&chaton.Event{
 			Type: chaton.MsgType_CONNECT,
 			Msg:  nil,
+		},
+	)
+
+	// Change nickname
+	stream.Send(
+		&chaton.Event{
+			Type: chaton.MsgType_SET_NICKNAME,
+			Msg: &chaton.Msg{
+				Content: "Kadoc",
+				Author:  "OSEF",
+			},
 		},
 	)
 
@@ -51,9 +63,22 @@ func connect(c chaton.ChatonClient) {
 		fmt.Print("> ")
 		content, _ := reader.ReadString('\n')
 
+		// Splie the content message in words
+		msg := strings.Split(content, " ")
+
+		if len(msg) == 0 {
+			continue
+		}
+
+		msgType := chaton.MsgType_MESSAGE
+		if msg[0] == "/nick" {
+			msgType = chaton.MsgType_SET_NICKNAME
+			content = strings.Join(msg[1:], " ")
+		}
+
 		err := stream.Send(
 			&chaton.Event{
-				Type: chaton.MsgType_MESSAGE,
+				Type: msgType,
 				Msg:  &chaton.Msg{Content: content},
 			},
 		)
