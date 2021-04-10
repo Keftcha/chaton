@@ -22,6 +22,7 @@ type event struct {
 type client struct {
 	stream chaton.Chaton_JoinServer
 	nick   string
+	status string
 }
 
 // ChatonServer implements the Chaton service
@@ -49,6 +50,7 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 		client: &client{
 			stream: stream,
 			nick:   "",
+			status: "Online.",
 		},
 	}
 
@@ -130,6 +132,7 @@ func eventRouting(c <-chan event) {
 		// Client send message
 		case chaton.MsgType_MESSAGE:
 			broadcasting(clients, e)
+		// TODO
 		case chaton.MsgType_QUIT:
 		// Cliend do an action
 		case chaton.MsgType_ME:
@@ -153,7 +156,29 @@ func eventRouting(c <-chan event) {
 					},
 				},
 			)
+		// List users on the server
 		case chaton.MsgType_LIST:
+			msg := ""
+			for i, c := range clients {
+				if i != 0 {
+					msg += "\n"
+				}
+				msg += fmt.Sprintf(
+					"- %s: %s",
+					c.nick,
+					c.status,
+				)
+			}
+
+			// Send only to the user who ask who is here
+			e.client.stream.Send(
+				&chaton.Event{
+					Type: chaton.MsgType_MESSAGE,
+					Msg: &chaton.Msg{
+						Content: msg,
+					},
+				},
+			)
 		}
 
 	}

@@ -54,7 +54,8 @@ func join(c chaton.ChatonClient) {
 		fmt.Print("> ")
 		content, _ := reader.ReadString('\n')
 
-		// Splie the content message in words
+		content = strings.TrimSpace(content)
+		// Split the content message in words
 		msg := strings.Split(content, " ")
 
 		if len(msg) == 0 {
@@ -68,6 +69,8 @@ func join(c chaton.ChatonClient) {
 		case "/me":
 			msgType = chaton.MsgType_ME
 			content = strings.Join(msg[1:], " ")
+		case "/list":
+			msgType = chaton.MsgType_LIST
 		}
 
 		err := stream.Send(
