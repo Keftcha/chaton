@@ -10,7 +10,7 @@ service Chaton {
 
 message Msg {
     string content = 1;
-    string author = 2;
+    string author = 2; // Ignored by the server when recieving from clients
 }
 
 message Event {
@@ -19,11 +19,22 @@ message Event {
 }
 
 enum MsgType {
-    CONNECT = 0; // Open the connection with the server
-    SET_NICKNAME = 1; // Set the client nickname
-    MESSAGE = 2; // Send a message
-    QUIT = 3; // Leave the server
-    ME = 4; // Send action message
-    LIST = 5; // List users connected on the server
+    // Open the connection with the server (subscribe to recieve message from him)
+    // The message content should be the nick name of the client (can be optional)
+    CONNECT = 0;
+    // Set the client nickname
+    // The message content should be the nick name of the client
+    SET_NICKNAME = 1;
+    // Send a message, the message content is what is send to other clients
+    MESSAGE = 2;
+    // Leave the server
+    // The message content is what the user say before leaving (can be optional)
+    QUIT = 3;
+    // Send action message
+    // The message content represent what the user do
+    ME = 4;
+    // List users connected on the server
+    // The message is ignored by the server
+    LIST = 5;
     TO = 6; // Send message only visible by mentioned users
 }
