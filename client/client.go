@@ -27,17 +27,8 @@ func connect(c chaton.ChatonClient) {
 	stream.Send(
 		&chaton.Event{
 			Type: chaton.MsgType_CONNECT,
-			Msg:  nil,
-		},
-	)
-
-	// Change nickname
-	stream.Send(
-		&chaton.Event{
-			Type: chaton.MsgType_SET_NICKNAME,
 			Msg: &chaton.Msg{
-				Content: "Kadoc",
-				Author:  "OSEF",
+				Content: "Moritz",
 			},
 		},
 	)

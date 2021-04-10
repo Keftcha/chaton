@@ -77,9 +77,13 @@ func eventRouting(c <-chan event) {
 		switch e.event.Type {
 		// A new client has arrived
 		case chaton.MsgType_CONNECT:
-			// Generate random name for the client
-			id, _ := uuid.NewRandom()
-			e.client.nick = id.String()
+			// Set the client name to the content of the message
+			if e.event.Msg != nil {
+				e.client.nick = e.event.Msg.Content
+			} else {
+				id, _ := uuid.NewRandom()
+				e.client.nick = id.String()
+			}
 			clients = append(clients, e.client)
 			// Prevent other users that a new client has arrived
 			broadcasting(
