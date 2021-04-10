@@ -18,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatonClient interface {
-	Connect(ctx context.Context, opts ...grpc.CallOption) (Chaton_ConnectClient, error)
+	// Join to talk with each others
+	Join(ctx context.Context, opts ...grpc.CallOption) (Chaton_JoinClient, error)
 }
 
 type chatonClient struct {
@@ -29,30 +30,30 @@ func NewChatonClient(cc grpc.ClientConnInterface) ChatonClient {
 	return &chatonClient{cc}
 }
 
-func (c *chatonClient) Connect(ctx context.Context, opts ...grpc.CallOption) (Chaton_ConnectClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Chaton_ServiceDesc.Streams[0], "/chaton.Chaton/Connect", opts...)
+func (c *chatonClient) Join(ctx context.Context, opts ...grpc.CallOption) (Chaton_JoinClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Chaton_ServiceDesc.Streams[0], "/chaton.Chaton/Join", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &chatonConnectClient{stream}
+	x := &chatonJoinClient{stream}
 	return x, nil
 }
 
-type Chaton_ConnectClient interface {
+type Chaton_JoinClient interface {
 	Send(*Event) error
 	Recv() (*Event, error)
 	grpc.ClientStream
 }
 
-type chatonConnectClient struct {
+type chatonJoinClient struct {
 	grpc.ClientStream
 }
 
-func (x *chatonConnectClient) Send(m *Event) error {
+func (x *chatonJoinClient) Send(m *Event) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *chatonConnectClient) Recv() (*Event, error) {
+func (x *chatonJoinClient) Recv() (*Event, error) {
 	m := new(Event)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -64,7 +65,8 @@ func (x *chatonConnectClient) Recv() (*Event, error) {
 // All implementations must embed UnimplementedChatonServer
 // for forward compatibility
 type ChatonServer interface {
-	Connect(Chaton_ConnectServer) error
+	// Join to talk with each others
+	Join(Chaton_JoinServer) error
 	mustEmbedUnimplementedChatonServer()
 }
 
@@ -72,8 +74,8 @@ type ChatonServer interface {
 type UnimplementedChatonServer struct {
 }
 
-func (UnimplementedChatonServer) Connect(Chaton_ConnectServer) error {
-	return status.Errorf(codes.Unimplemented, "method Connect not implemented")
+func (UnimplementedChatonServer) Join(Chaton_JoinServer) error {
+	return status.Errorf(codes.Unimplemented, "method Join not implemented")
 }
 func (UnimplementedChatonServer) mustEmbedUnimplementedChatonServer() {}
 
@@ -88,25 +90,25 @@ func RegisterChatonServer(s grpc.ServiceRegistrar, srv ChatonServer) {
 	s.RegisterService(&Chaton_ServiceDesc, srv)
 }
 
-func _Chaton_Connect_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ChatonServer).Connect(&chatonConnectServer{stream})
+func _Chaton_Join_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ChatonServer).Join(&chatonJoinServer{stream})
 }
 
-type Chaton_ConnectServer interface {
+type Chaton_JoinServer interface {
 	Send(*Event) error
 	Recv() (*Event, error)
 	grpc.ServerStream
 }
 
-type chatonConnectServer struct {
+type chatonJoinServer struct {
 	grpc.ServerStream
 }
 
-func (x *chatonConnectServer) Send(m *Event) error {
+func (x *chatonJoinServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *chatonConnectServer) Recv() (*Event, error) {
+func (x *chatonJoinServer) Recv() (*Event, error) {
 	m := new(Event)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -123,8 +125,8 @@ var Chaton_ServiceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Connect",
-			Handler:       _Chaton_Connect_Handler,
+			StreamName:    "Join",
+			Handler:       _Chaton_Join_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

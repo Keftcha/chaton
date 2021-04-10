@@ -5,7 +5,8 @@ package chaton;
 option go_package = "./chaton";
 
 service Chaton {
-    rpc Connect (stream Event) returns (stream Event) {}
+    // Join to talk with each others
+    rpc Join (stream Event) returns (stream Event) {}
 }
 
 message Msg {

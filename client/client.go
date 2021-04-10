@@ -14,9 +14,9 @@ import (
 	"github.com/keftcha/chaton/grpc/chaton"
 )
 
-func connect(c chaton.ChatonClient) {
+func join(c chaton.ChatonClient) {
 	ctx, cancel := context.WithCancel(context.Background())
-	stream, err := c.Connect(ctx)
+	stream, err := c.Join(ctx)
 	defer cancel()
 
 	if err != nil {
@@ -92,5 +92,5 @@ func main() {
 
 	client := chaton.NewChatonClient(conn)
 
-	connect(client)
+	join(client)
 }

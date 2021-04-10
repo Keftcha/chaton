@@ -20,7 +20,7 @@ type event struct {
 }
 
 type client struct {
-	stream chaton.Chaton_ConnectServer
+	stream chaton.Chaton_JoinServer
 	nick   string
 }
 
@@ -43,7 +43,7 @@ func newChatonServer() *ChatonServer {
 }
 
 // Connect implements the chaton interface
-func (s *ChatonServer) Connect(stream chaton.Chaton_ConnectServer) error {
+func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	// Initialise the client of the event
 	e := event{
 		client: &client{
