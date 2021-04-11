@@ -48,6 +48,10 @@ func (cs *clients) remove(client *client) {
 	}
 }
 
+func (cs *clients) add(client *client) {
+	*cs = append(*cs, client)
+}
+
 func (cs *clients) listClients() string {
 	lst := ""
 	for i, c := range *cs {
@@ -108,6 +112,33 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
+func connect(cs *clients, e event) {
+	// Set the client name to the content of the message
+	if e.event.Msg != nil {
+		e.client.nick = e.event.Msg.Content
+	} else {
+		id, _ := uuid.NewRandom()
+		e.client.nick = id.String()
+	}
+	// Add the client to our list
+	cs.add(e.client)
+	// Prevent other users that a new client has arrived
+	cs.broadcasting(
+		event{
+			event: &chaton.Event{
+				Type: chaton.MsgType_MESSAGE,
+				Msg: &chaton.Msg{
+					Content: "A new boi has arrived",
+				},
+			},
+			client: &client{
+				stream: nil,
+				nick:   "Server say",
+			},
+		},
+	)
+}
+
 func changeNick(cs clients, e event) {
 	// The new nickname is the content of the message
 	newNick := e.event.Msg.Content
@@ -134,7 +165,7 @@ func changeNick(cs clients, e event) {
 	e.client.nick = newNick
 }
 
-func quit(cs clients, e event) {
+func quit(cs *clients, e event) {
 	// Did the client let a reason
 	reason := ""
 	if e.event.Msg != nil {
@@ -207,29 +238,7 @@ func routeEvents(c <-chan event) {
 		switch e.event.Type {
 		// A new client has arrived
 		case chaton.MsgType_CONNECT:
-			// Set the client name to the content of the message
-			if e.event.Msg != nil {
-				e.client.nick = e.event.Msg.Content
-			} else {
-				id, _ := uuid.NewRandom()
-				e.client.nick = id.String()
-			}
-			clients = append(clients, e.client)
-			// Prevent other users that a new client has arrived
-			clients.broadcasting(
-				event{
-					event: &chaton.Event{
-						Type: chaton.MsgType_MESSAGE,
-						Msg: &chaton.Msg{
-							Content: "A new boi has arrived",
-						},
-					},
-					client: &client{
-						stream: nil,
-						nick:   "Server say",
-					},
-				},
-			)
+			connect(&clients, e)
 		// Client change his nickname
 		case chaton.MsgType_SET_NICKNAME:
 			changeNick(clients, e)
@@ -238,7 +247,7 @@ func routeEvents(c <-chan event) {
 			clients.broadcasting(e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
-			quit(clients, e)
+			quit(&clients, e)
 		// Client do an action
 		case chaton.MsgType_ME:
 			action(clients, e)
