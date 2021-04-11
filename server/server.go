@@ -48,6 +48,21 @@ func (cs *clients) remove(client *client) {
 	}
 }
 
+func (cs *clients) listClients() string {
+	lst := ""
+	for i, c := range *cs {
+		if i != 0 {
+			lst += "\n"
+		}
+		lst += fmt.Sprintf(
+			"- %s: %s",
+			c.nick,
+			c.status,
+		)
+	}
+	return lst
+}
+
 // ChatonServer implements the Chaton service
 type ChatonServer struct {
 	chaton.UnimplementedChatonServer
@@ -93,18 +108,8 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
-func listUsers(cs clients, e event) {
-	msg := ""
-	for i, c := range cs {
-		if i != 0 {
-			msg += "\n"
-		}
-		msg += fmt.Sprintf(
-			"- %s: %s",
-			c.nick,
-			c.status,
-		)
-	}
+func sendListUsers(cs clients, e event) {
+	msg := cs.listClients()
 
 	// Send only to the user who ask who is here
 	e.client.stream.Send(
@@ -227,7 +232,7 @@ func routeEvents(c <-chan event) {
 			)
 		// List users on the server
 		case chaton.MsgType_LIST:
-			listUsers(clients, e)
+			sendListUsers(clients, e)
 		}
 	}
 }
