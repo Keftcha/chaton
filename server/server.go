@@ -108,6 +108,60 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
+func changeNick(cs clients, e event) {
+	// The new nickname is the content of the message
+	newNick := e.event.Msg.Content
+	// Prevent other users that the client has changed his nickname
+	cs.broadcasting(
+		event{
+			event: &chaton.Event{
+				Type: chaton.MsgType_MESSAGE,
+				Msg: &chaton.Msg{
+					Content: fmt.Sprintf(
+						"%s change his nickname to %s",
+						e.client.nick,
+						newNick,
+					),
+				},
+			},
+			client: &client{
+				stream: nil,
+				nick:   "Server say",
+			},
+		},
+	)
+	// Change the nickname
+	e.client.nick = newNick
+}
+
+func quit(cs clients, e event) {
+	// Did the client let a reason
+	reason := ""
+	if e.event.Msg != nil {
+		reason = fmt.Sprintf(" (\"%s\")", e.event.Msg.Content)
+	}
+	// Prevent other users the client has left
+	cs.broadcasting(
+		event{
+			event: &chaton.Event{
+				Type: chaton.MsgType_MESSAGE,
+				Msg: &chaton.Msg{
+					Content: fmt.Sprintf(
+						"%s has left",
+						e.client.nick,
+					) + reason,
+				},
+			},
+			client: &client{
+				stream: nil,
+				nick:   "Server say",
+			},
+		},
+	)
+	// Remove the client of our list
+	cs.remove(e.client)
+}
+
 func action(cs clients, e event) {
 	cs.broadcasting(
 		event{
@@ -178,59 +232,13 @@ func routeEvents(c <-chan event) {
 			)
 		// Client change his nickname
 		case chaton.MsgType_SET_NICKNAME:
-			// The new nickname is the content of the message
-			newNick := e.event.Msg.Content
-			// Prevent other users that the client has changed his nickname
-			clients.broadcasting(
-				event{
-					event: &chaton.Event{
-						Type: chaton.MsgType_MESSAGE,
-						Msg: &chaton.Msg{
-							Content: fmt.Sprintf(
-								"%s change his nickname to %s",
-								e.client.nick,
-								newNick,
-							),
-						},
-					},
-					client: &client{
-						stream: nil,
-						nick:   "Server say",
-					},
-				},
-			)
-			// Change the nickname
-			e.client.nick = newNick
+			changeNick(clients, e)
 		// Client send message
 		case chaton.MsgType_MESSAGE:
 			clients.broadcasting(e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
-			// Did the client let a reason
-			reason := ""
-			if e.event.Msg != nil {
-				reason = fmt.Sprintf(" (\"%s\")", e.event.Msg.Content)
-			}
-			// Prevent other users the client has left
-			clients.broadcasting(
-				event{
-					event: &chaton.Event{
-						Type: chaton.MsgType_MESSAGE,
-						Msg: &chaton.Msg{
-							Content: fmt.Sprintf(
-								"%s has left",
-								e.client.nick,
-							) + reason,
-						},
-					},
-					client: &client{
-						stream: nil,
-						nick:   "Server say",
-					},
-				},
-			)
-			// Remove the client of our list
-			clients.remove(e.client)
+			quit(clients, e)
 		// Client do an action
 		case chaton.MsgType_ME:
 			action(clients, e)
