@@ -25,6 +25,29 @@ type client struct {
 	status string
 }
 
+type clients []*client
+
+func (cs *clients) broadcasting(e event) {
+	for _, c := range *cs {
+		// Put the sender name as the message author
+		e.event.Msg.Author = e.client.nick
+		// Remove client if there is an error sending him message
+		if err := c.stream.Send(e.event); err != nil {
+			cs.remove(e.client)
+		}
+	}
+}
+
+func (cs *clients) remove(client *client) {
+	// Remove the client of our list
+	for i, c := range *cs {
+		if c == client {
+			*cs = append((*cs)[:i], (*cs)[i+1:]...)
+			break
+		}
+	}
+}
+
 // ChatonServer implements the Chaton service
 type ChatonServer struct {
 	chaton.UnimplementedChatonServer
@@ -39,7 +62,7 @@ func newChatonServer() *ChatonServer {
 	s := &ChatonServer{
 		es: c,
 	}
-	go eventRouting(c)
+	go routeEvents(c)
 	return s
 }
 
@@ -70,8 +93,8 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
-func eventRouting(c <-chan event) {
-	var clients []*client
+func routeEvents(c <-chan event) {
+	var clients clients
 
 	// Loop on messages in channel
 	for e := range c {
@@ -88,8 +111,7 @@ func eventRouting(c <-chan event) {
 			}
 			clients = append(clients, e.client)
 			// Prevent other users that a new client has arrived
-			broadcasting(
-				&clients,
+			clients.broadcasting(
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -108,8 +130,7 @@ func eventRouting(c <-chan event) {
 			// The new nickname is the content of the message
 			newNick := e.event.Msg.Content
 			// Prevent other users that the client has changed his nickname
-			broadcasting(
-				&clients,
+			clients.broadcasting(
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -131,7 +152,7 @@ func eventRouting(c <-chan event) {
 			e.client.nick = newNick
 		// Client send message
 		case chaton.MsgType_MESSAGE:
-			broadcasting(&clients, e)
+			clients.broadcasting(e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
 			// Did the client let a reason
@@ -140,8 +161,7 @@ func eventRouting(c <-chan event) {
 				reason = fmt.Sprintf(" (\"%s\")", e.event.Msg.Content)
 			}
 			// Prevent other users the client has left
-			broadcasting(
-				&clients,
+			clients.broadcasting(
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -159,11 +179,10 @@ func eventRouting(c <-chan event) {
 				},
 			)
 			// Remove the client of our list
-			clients = removeClient(clients, e.client)
+			clients.remove(e.client)
 		// Client do an action
 		case chaton.MsgType_ME:
-			broadcasting(
-				&clients,
+			clients.broadcasting(
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -207,28 +226,6 @@ func eventRouting(c <-chan event) {
 			)
 		}
 	}
-}
-
-func broadcasting(cs *[]*client, e event) {
-	for _, c := range *cs {
-		// Put the sender name as the message author
-		e.event.Msg.Author = e.client.nick
-		// Remove client if there is an error sending him message
-		if err := c.stream.Send(e.event); err != nil {
-			*cs = removeClient(*cs, e.client)
-		}
-	}
-}
-
-func removeClient(cs []*client, client *client) []*client {
-	// Remove the client of our list
-	for i, c := range cs {
-		if c == client {
-			cs = append(cs[:i], cs[i+1:]...)
-			break
-		}
-	}
-	return cs
 }
 
 func main() {
