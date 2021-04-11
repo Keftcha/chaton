@@ -89,7 +89,7 @@ func eventRouting(c <-chan event) {
 			clients = append(clients, e.client)
 			// Prevent other users that a new client has arrived
 			broadcasting(
-				clients,
+				&clients,
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -109,7 +109,7 @@ func eventRouting(c <-chan event) {
 			newNick := e.event.Msg.Content
 			// Prevent other users that the client has changed his nickname
 			broadcasting(
-				clients,
+				&clients,
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -131,7 +131,7 @@ func eventRouting(c <-chan event) {
 			e.client.nick = newNick
 		// Client send message
 		case chaton.MsgType_MESSAGE:
-			broadcasting(clients, e)
+			broadcasting(&clients, e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
 			// Did the client let a reason
@@ -141,7 +141,7 @@ func eventRouting(c <-chan event) {
 			}
 			// Prevent other users the client has left
 			broadcasting(
-				clients,
+				&clients,
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -159,16 +159,11 @@ func eventRouting(c <-chan event) {
 				},
 			)
 			// Remove the client of our list
-			for i, c := range clients {
-				if c == e.client {
-					clients = append(clients[:i], clients[i+1:]...)
-					break
-				}
-			}
+			clients = removeClient(clients, e.client)
 		// Client do an action
 		case chaton.MsgType_ME:
 			broadcasting(
-				clients,
+				&clients,
 				event{
 					event: &chaton.Event{
 						Type: chaton.MsgType_MESSAGE,
@@ -214,12 +209,26 @@ func eventRouting(c <-chan event) {
 	}
 }
 
-func broadcasting(cs []*client, e event) {
-	for _, c := range cs {
+func broadcasting(cs *[]*client, e event) {
+	for _, c := range *cs {
 		// Put the sender name as the message author
 		e.event.Msg.Author = e.client.nick
-		c.stream.Send(e.event)
+		// Remove client if there is an error sending him message
+		if err := c.stream.Send(e.event); err != nil {
+			*cs = removeClient(*cs, e.client)
+		}
 	}
+}
+
+func removeClient(cs []*client, client *client) []*client {
+	// Remove the client of our list
+	for i, c := range cs {
+		if c == client {
+			cs = append(cs[:i], cs[i+1:]...)
+			break
+		}
+	}
+	return cs
 }
 
 func main() {
