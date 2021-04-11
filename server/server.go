@@ -108,6 +108,28 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
+func action(cs clients, e event) {
+	cs.broadcasting(
+		event{
+			event: &chaton.Event{
+				Type: chaton.MsgType_MESSAGE,
+				Msg: &chaton.Msg{
+					// Add the pseudo before the action
+					Content: fmt.Sprintf(
+						"*%s %s*",
+						e.client.nick,
+						e.event.Msg.Content,
+					),
+				},
+			},
+			client: &client{
+				stream: nil,
+				nick:   "Server say",
+			},
+		},
+	)
+}
+
 func sendListUsers(cs clients, e event) {
 	msg := cs.listClients()
 
@@ -211,25 +233,7 @@ func routeEvents(c <-chan event) {
 			clients.remove(e.client)
 		// Client do an action
 		case chaton.MsgType_ME:
-			clients.broadcasting(
-				event{
-					event: &chaton.Event{
-						Type: chaton.MsgType_MESSAGE,
-						Msg: &chaton.Msg{
-							// Add the pseudo before the action
-							Content: fmt.Sprintf(
-								"*%s %s*",
-								e.client.nick,
-								e.event.Msg.Content,
-							),
-						},
-					},
-					client: &client{
-						stream: nil,
-						nick:   "Server say",
-					},
-				},
-			)
+			action(clients, e)
 		// List users on the server
 		case chaton.MsgType_LIST:
 			sendListUsers(clients, e)
