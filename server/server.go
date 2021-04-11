@@ -25,18 +25,17 @@ type ChatonServer struct {
 	chaton.UnimplementedChatonServer
 
 	// Events sended
-	es chan<- event
+	es chan event
 	// Clients connected
 	cs clients
 }
 
 // newChatonServer create a new ChatonServer service
 func newChatonServer() *ChatonServer {
-	c := make(chan event)
 	s := &ChatonServer{
-		es: c,
+		es: make(chan event),
 	}
-	go s.dispatch(c)
+	go s.dispatch()
 	return s
 }
 
@@ -68,10 +67,10 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 }
 
 // dispatch recieved event
-func (s *ChatonServer) dispatch(c <-chan event) {
+func (s *ChatonServer) dispatch() {
 
 	// Loop on messages in channel
-	for e := range c {
+	for e := range s.es {
 		// Switch on the Event
 		switch e.event.Type {
 		// A new client has arrived
