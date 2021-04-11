@@ -93,6 +93,30 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	}
 }
 
+func listUsers(cs clients, e event) {
+	msg := ""
+	for i, c := range cs {
+		if i != 0 {
+			msg += "\n"
+		}
+		msg += fmt.Sprintf(
+			"- %s: %s",
+			c.nick,
+			c.status,
+		)
+	}
+
+	// Send only to the user who ask who is here
+	e.client.stream.Send(
+		&chaton.Event{
+			Type: chaton.MsgType_MESSAGE,
+			Msg: &chaton.Msg{
+				Content: msg,
+			},
+		},
+	)
+}
+
 func routeEvents(c <-chan event) {
 	var clients clients
 
@@ -203,27 +227,7 @@ func routeEvents(c <-chan event) {
 			)
 		// List users on the server
 		case chaton.MsgType_LIST:
-			msg := ""
-			for i, c := range clients {
-				if i != 0 {
-					msg += "\n"
-				}
-				msg += fmt.Sprintf(
-					"- %s: %s",
-					c.nick,
-					c.status,
-				)
-			}
-
-			// Send only to the user who ask who is here
-			e.client.stream.Send(
-				&chaton.Event{
-					Type: chaton.MsgType_MESSAGE,
-					Msg: &chaton.Msg{
-						Content: msg,
-					},
-				},
-			)
+			listUsers(clients, e)
 		}
 	}
 }
