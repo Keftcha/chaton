@@ -71,6 +71,9 @@ func join(c chaton.ChatonClient) {
 			content = strings.Join(msg[1:], " ")
 		case "/list":
 			msgType = chaton.MsgType_LIST
+		case "/quit":
+			msgType = chaton.MsgType_QUIT
+			content = strings.Join(msg[1:], " ")
 		}
 
 		err := stream.Send(
@@ -83,6 +86,7 @@ func join(c chaton.ChatonClient) {
 			fmt.Println(err)
 			return
 		}
+
 	}
 }
 

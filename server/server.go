@@ -132,9 +132,40 @@ func eventRouting(c <-chan event) {
 		// Client send message
 		case chaton.MsgType_MESSAGE:
 			broadcasting(clients, e)
-		// TODO
+		// Client whant to leave us
 		case chaton.MsgType_QUIT:
-		// Cliend do an action
+			// Did the client let a reason
+			reason := ""
+			if e.event.Msg != nil {
+				reason = fmt.Sprintf(" (\"%s\")", e.event.Msg.Content)
+			}
+			// Prevent other users the client has left
+			broadcasting(
+				clients,
+				event{
+					event: &chaton.Event{
+						Type: chaton.MsgType_MESSAGE,
+						Msg: &chaton.Msg{
+							Content: fmt.Sprintf(
+								"%s has left",
+								e.client.nick,
+							) + reason,
+						},
+					},
+					client: &client{
+						stream: nil,
+						nick:   "Server say",
+					},
+				},
+			)
+			// Remove the client of our list
+			for i, c := range clients {
+				if c == e.client {
+					clients = append(clients[:i], clients[i+1:]...)
+					break
+				}
+			}
+		// Client do an action
 		case chaton.MsgType_ME:
 			broadcasting(
 				clients,
@@ -180,7 +211,6 @@ func eventRouting(c <-chan event) {
 				},
 			)
 		}
-
 	}
 }
 
