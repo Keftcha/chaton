@@ -1,33 +1,34 @@
-package main
+package router
 
 import (
 	"github.com/google/uuid"
 
 	"github.com/keftcha/chaton/grpc/chaton"
+	"github.com/keftcha/chaton/server/types"
 )
 
-func connect(cs *clients, e event) {
+func Connect(cs *types.Clients, e types.Event) {
 	// Set the client name to the content of the message
-	if e.event.Msg != nil {
-		e.client.nick = e.event.Msg.Content
+	if e.Event.Msg != nil {
+		e.Client.Nick = e.Event.Msg.Content
 	} else {
 		id, _ := uuid.NewRandom()
-		e.client.nick = id.String()
+		e.Client.Nick = id.String()
 	}
 	// Add the client to our list
-	cs.add(e.client)
+	cs.Add(e.Client)
 	// Prevent other users that a new client has arrived
-	cs.broadcasting(
-		event{
-			event: &chaton.Event{
+	cs.Broadcasting(
+		types.Event{
+			Event: &chaton.Event{
 				Type: chaton.MsgType_MESSAGE,
 				Msg: &chaton.Msg{
 					Content: "A new boi has arrived",
 				},
 			},
-			client: &client{
-				stream: nil,
-				nick:   "Server say",
+			Client: &types.Client{
+				Stream: nil,
+				Nick:   "Server say",
 			},
 		},
 	)

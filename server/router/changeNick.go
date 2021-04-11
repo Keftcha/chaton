@@ -1,33 +1,34 @@
-package main
+package router
 
 import (
 	"fmt"
 
 	"github.com/keftcha/chaton/grpc/chaton"
+	"github.com/keftcha/chaton/server/types"
 )
 
-func changeNick(cs clients, e event) {
+func ChangeNick(cs types.Clients, e types.Event) {
 	// The new nickname is the content of the message
-	newNick := e.event.Msg.Content
+	newNick := e.Event.Msg.Content
 	// Prevent other users that the client has changed his nickname
-	cs.broadcasting(
-		event{
-			event: &chaton.Event{
+	cs.Broadcasting(
+		types.Event{
+			Event: &chaton.Event{
 				Type: chaton.MsgType_MESSAGE,
 				Msg: &chaton.Msg{
 					Content: fmt.Sprintf(
 						"%s change his nickname to %s",
-						e.client.nick,
+						e.Client.Nick,
 						newNick,
 					),
 				},
 			},
-			client: &client{
-				stream: nil,
-				nick:   "Server say",
+			Client: &types.Client{
+				Stream: nil,
+				Nick:   "Server say",
 			},
 		},
 	)
 	// Change the nickname
-	e.client.nick = newNick
+	e.Client.Nick = newNick
 }

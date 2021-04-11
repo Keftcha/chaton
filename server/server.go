@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/keftcha/chaton/grpc/chaton"
+	"github.com/keftcha/chaton/server/router"
+	"github.com/keftcha/chaton/server/types"
 )
 
 // ChatonServer implements the Chaton service
@@ -18,12 +20,12 @@ type ChatonServer struct {
 	chaton.UnimplementedChatonServer
 
 	// Events sended
-	es chan<- event
+	es chan<- types.Event
 }
 
 // newChatonServer create a new ChatonServer service
 func newChatonServer() *ChatonServer {
-	c := make(chan event)
+	c := make(chan types.Event)
 	s := &ChatonServer{
 		es: c,
 	}
@@ -31,14 +33,14 @@ func newChatonServer() *ChatonServer {
 	return s
 }
 
-// Connect implements the chaton interface
+// Join implements the chaton interface
 func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	// Initialise the client of the event
-	e := event{
-		client: &client{
-			stream: stream,
-			nick:   "",
-			status: "Online.",
+	e := types.Event{
+		Client: &types.Client{
+			Stream: stream,
+			Nick:   "",
+			Status: "Online.",
 		},
 	}
 
@@ -53,36 +55,36 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 		}
 
 		// Add the new message to the channel queue
-		e.event = in
+		e.Event = in
 		s.es <- e
 	}
 }
 
-func routeEvents(c <-chan event) {
-	var clients clients
+func routeEvents(c <-chan types.Event) {
+	var clients types.Clients
 
 	// Loop on messages in channel
 	for e := range c {
-		// Switch on the event
-		switch e.event.Type {
+		// Switch on the Event
+		switch e.Event.Type {
 		// A new client has arrived
 		case chaton.MsgType_CONNECT:
-			connect(&clients, e)
+			router.Connect(&clients, e)
 		// Client change his nickname
 		case chaton.MsgType_SET_NICKNAME:
-			changeNick(clients, e)
+			router.ChangeNick(clients, e)
 		// Client send message
 		case chaton.MsgType_MESSAGE:
-			clients.broadcasting(e)
+			clients.Broadcasting(e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
-			quit(&clients, e)
+			router.Quit(&clients, e)
 		// Client do an action
 		case chaton.MsgType_ME:
-			action(clients, e)
+			router.Action(clients, e)
 		// List users on the server
 		case chaton.MsgType_LIST:
-			sendListUsers(clients, e)
+			router.SendListUsers(clients, e)
 		}
 	}
 }
