@@ -21,4 +21,4 @@ server-stop-ctn:
 ################################################## Go cli client
 # Run client localy
 client-run:
-	@go run ./client/*
+	@go run ./clients/*
