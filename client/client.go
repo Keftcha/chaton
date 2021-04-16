@@ -74,6 +74,13 @@ func join(c chaton.ChatonClient) {
 		case "/quit":
 			msgType = chaton.MsgType_QUIT
 			content = strings.Join(msg[1:], " ")
+		case "/status":
+			msgType = chaton.MsgType_STATUS
+			content = strings.Join(msg[1:], " ")
+		case "/clear":
+			msgType = chaton.MsgType_CLEAR
+		case "/show":
+			msgType = chaton.MsgType_SHOW
 		}
 
 		err := stream.Send(

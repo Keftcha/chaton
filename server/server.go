@@ -91,6 +91,15 @@ func (s *ChatonServer) dispatch() {
 		// List users on the server
 		case chaton.MsgType_LIST:
 			s.listUsers(e)
+		// Client set his status
+		case chaton.MsgType_STATUS:
+			s.changeStatus(e)
+		// Client remove his status
+		case chaton.MsgType_CLEAR:
+			s.clearStatus(e)
+		// Show to the client his status
+		case chaton.MsgType_SHOW:
+			s.showStatus(e)
 		}
 	}
 }
@@ -212,6 +221,28 @@ func (s *ChatonServer) listUsers(e event) {
 			Type: chaton.MsgType_MESSAGE,
 			Msg: &chaton.Msg{
 				Content: msg,
+			},
+		},
+	)
+}
+
+// changeStatus let the user set his status
+func (s *ChatonServer) changeStatus(e event) {
+	e.client.status = e.event.Msg.Content
+}
+
+// clearStatus of the user
+func (s *ChatonServer) clearStatus(e event) {
+	e.client.status = "Online."
+}
+
+// showStatus send the status to the client
+func (s *ChatonServer) showStatus(e event) {
+	e.client.stream.Send(
+		&chaton.Event{
+			Type: chaton.MsgType_MESSAGE,
+			Msg: &chaton.Msg{
+				Content: "Current status: " + e.client.status,
 			},
 		},
 	)

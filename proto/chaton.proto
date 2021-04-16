@@ -37,5 +37,16 @@ enum MsgType {
     // List users connected on the server
     // The message is ignored by the server
     LIST = 5;
-    TO = 6; // Send message only visible by mentioned users
+
+    // Set the user current status
+    // The message content is the status
+    STATUS = 6;
+    // Remove the status
+    // The message from the client is ignored
+    CLEAR = 7;
+    // Show the client's own status
+    // The message from the client is ignored
+    SHOW = 8;
+
+    TO = 9; // Send message only visible by mentioned users
 }
