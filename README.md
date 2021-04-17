@@ -19,4 +19,11 @@ You can use the `.env` file (to complete with the `.env.tpl`) for docker usage.
 
 ## Clients
 
-There is multiple clients in the `./clients` directory.
+There is multiple clients in the `./clients/` directory.
+
+### The go cli client
+
+You can run the go cli client with `make go-cli-client-run`.
+
+You also can build the client with `make go-cli-client-build`.
+It will build the binary in the `./bin/` directory.
