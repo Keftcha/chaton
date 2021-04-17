@@ -37,23 +37,58 @@ func join(c chaton.ChatonClient) {
 	go func() {
 		for {
 			recv, err := stream.Recv()
+			// Ignore EOF error
 			if err == io.EOF {
-				fmt.Println("Connection closed by server (EOF)")
 				return
 			}
 			if err != nil {
-				fmt.Println("err recieved message: ", err)
-				return
+				log.Fatal(err)
 			}
 
+			// Format time
 			now := time.Now()
-			fmt.Printf(
-				"%d\033[33m:\033[0m%d\033[33m:\033[0m%d %s \033[32m|\033[0m  %s\n",
+			displayedTime := fmt.Sprintf(
+				"%02d\033[33m:\033[0m%02d\033[33m:\033[0m%02d",
 				now.Hour(),
 				now.Minute(),
 				now.Second(),
-				recv.Msg.Author,
-				recv.Msg.Content,
+			)
+
+			// Format sender and message content
+			author := recv.Msg.Author
+			content := recv.Msg.Content
+			switch recv.Type {
+			case chaton.MsgType_CONNECT:
+				author = "       \033[32m-->\033[0m"
+			case chaton.MsgType_SET_NICKNAME:
+				author = "        \033[35m--\033[0m"
+			case chaton.MsgType_MESSAGE:
+				author = "@" + recv.Msg.Author
+			case chaton.MsgType_QUIT:
+				author = "       \033[31m<--\033[0m"
+			case chaton.MsgType_ME:
+				author = "*"
+				content = "\033[03m" + content + "\033[0m"
+			case chaton.MsgType_LIST:
+				author = "        \033[35m--\033[0m"
+				// New message content
+				c := ""
+				for i, l := range strings.Split(content, "\n") {
+					if i == 0 {
+						c += l
+					}
+					c += "\n                    \033[32m|\033[0m  " + l
+				}
+				content = c
+			case chaton.MsgType_SHOW:
+				author = "        \033[35m--\033[0m"
+			}
+
+			fmt.Printf(
+				"%s %10s \033[32m|\033[0m  %s\n",
+				displayedTime,
+				author,
+				content,
 			)
 		}
 	}()
@@ -98,10 +133,15 @@ func join(c chaton.ChatonClient) {
 			},
 		)
 		if err != nil {
-			fmt.Println(err)
-			return
+			log.Fatal(err)
 		}
 
+		// Properly close client stream
+		if msg[0] == "/quit" {
+			time.Sleep(100 * time.Millisecond)
+			stream.CloseSend()
+			return
+		}
 	}
 }
 
