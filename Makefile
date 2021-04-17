@@ -35,3 +35,9 @@ server-ctn-delete:
 # Run client localy
 client-run:
 	@go run ./clients/*
+
+# Build the client
+client-build:
+	@mkdir -p ./bin
+	@go build -o ./bin/chaton ./clients/*
+	@echo "Client build (./bin/chaton)"
