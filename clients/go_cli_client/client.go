@@ -77,8 +77,9 @@ func join(c chaton.ChatonClient) {
 				for i, l := range strings.Split(content, "\n") {
 					if i == 0 {
 						c += l
+					} else {
+						c += "\n                    \033[32m|\033[0m  " + l
 					}
-					c += "\n                    \033[32m|\033[0m  " + l
 				}
 				content = c
 			case chaton.MsgType_SHOW:
