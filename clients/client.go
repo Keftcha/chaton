@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -45,8 +46,12 @@ func join(c chaton.ChatonClient) {
 				return
 			}
 
+			now := time.Now()
 			fmt.Printf(
-				"%s: %s\n",
+				"%d\033[33m:\033[0m%d\033[33m:\033[0m%d %s \033[32m|\033[0m  %s\n",
+				now.Hour(),
+				now.Minute(),
+				now.Second(),
 				recv.Msg.Author,
 				recv.Msg.Content,
 			)
@@ -55,7 +60,6 @@ func join(c chaton.ChatonClient) {
 
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("> ")
 		content, _ := reader.ReadString('\n')
 
 		content = strings.TrimSpace(content)
