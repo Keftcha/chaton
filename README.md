@@ -27,3 +27,5 @@ You can run the go cli client with `make go-cli-client-run`.
 
 You also can build the client with `make go-cli-client-build`.
 It will build the binary in the `./bin/` directory.
+
+This client is configured using flags, run it with the `-h` flag to know them.
