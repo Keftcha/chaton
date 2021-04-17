@@ -14,7 +14,10 @@ import (
 	"github.com/keftcha/chaton/grpc/chaton"
 )
 
+// HOST address for the server
 var HOST string
+
+// PORT the server listen on
 var PORT int64
 
 func init() {
