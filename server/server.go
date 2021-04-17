@@ -46,5 +46,7 @@ func main() {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	chaton.RegisterChatonServer(grpcServer, newChatonServer())
-	grpcServer.Serve(lis)
+	if err = grpcServer.Serve(lis); err != nil {
+		log.Fatal(err)
+	}
 }
