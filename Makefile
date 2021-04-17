@@ -13,9 +13,9 @@ server-image:
 # Run container
 server-ctn-run:
 	@if [ -f ./server/.env ]; then \
-		docker run --env-file ./server/.env -d --name chaton-server chaton-server; \
+		docker run --env-file ./server/.env -d --name chaton-server -p 21617:21617 chaton-server; \
 	else \
-		docker run -d --name chaton-server chaton-server; \
+		docker run -d --name chaton-server -p 21617:21617 chaton-server; \
 	fi
 
 
