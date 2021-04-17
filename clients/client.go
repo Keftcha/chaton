@@ -45,7 +45,11 @@ func join(c chaton.ChatonClient) {
 				return
 			}
 
-			fmt.Println(recv.Msg.Author, recv.Msg.Content)
+			fmt.Printf(
+				"%s: %s\n",
+				recv.Msg.Author,
+				recv.Msg.Content,
+			)
 		}
 	}()
 
