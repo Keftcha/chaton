@@ -18,6 +18,10 @@ server-ctn-run:
 		docker run -d --name chaton-server -p 21617:21617 chaton-server; \
 	fi
 
+# Restart the running container with a new builded version
+server-ctn-restart: server-ctn-stop server-ctn-delete server-image server-ctn-run
+	@echo Container stopped, deleted, image rebuilded, container now running.
+
 
 # Stop contaner
 server-ctn-stop:
