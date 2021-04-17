@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -29,7 +30,7 @@ func join(c chaton.ChatonClient) {
 		&chaton.Event{
 			Type: chaton.MsgType_CONNECT,
 			Msg: &chaton.Msg{
-				Content: "Moritz",
+				Content: uname,
 			},
 		},
 	)
@@ -145,11 +146,23 @@ func join(c chaton.ChatonClient) {
 	}
 }
 
+var host string = "localhost"
+var port int = 21617
+var uname string // User nick name
+
+func init() {
+	flag.StringVar(&host, "host", "localhost", "The host address of the server")
+	flag.IntVar(&port, "port", 21617, "The port of the server we connect to")
+	flag.StringVar(&uname, "username", "", "The nickname of the user")
+
+	flag.Parse()
+}
+
 func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial("localhost:21617", opts...)
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, port), opts...)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
