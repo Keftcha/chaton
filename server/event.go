@@ -14,8 +14,6 @@ type event struct {
 func newEvent(
 	eventType chaton.MsgType,
 	msgContent string,
-	stream chaton.Chaton_JoinServer,
-	nick string,
 ) event {
 	return event{
 		event: &chaton.Event{
@@ -25,8 +23,8 @@ func newEvent(
 			},
 		},
 		client: &client{
-			stream: stream,
-			nick:   nick,
+			stream: nil,
+			nick:   "",
 		},
 	}
 }

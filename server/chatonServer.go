@@ -109,10 +109,8 @@ func (s *ChatonServer) connect(e event) {
 	// Prevent other users that a new client has arrived
 	s.cs.broadcasting(
 		newEvent(
-			chaton.MsgType_MESSAGE,
+			chaton.MsgType_CONNECT,
 			fmt.Sprintf("%s has joined.", e.client.nick),
-			nil,
-			"*",
 		),
 	)
 }
@@ -125,10 +123,8 @@ func (s *ChatonServer) changeNick(e event) {
 	// Prevent other users that the client has changed his nickname
 	s.cs.broadcasting(
 		newEvent(
-			chaton.MsgType_MESSAGE,
+			chaton.MsgType_SET_NICKNAME,
 			fmt.Sprintf("%s is now known as %s", e.client.nick, newNick),
-			nil,
-			"*",
 		),
 	)
 
@@ -147,10 +143,8 @@ func (s *ChatonServer) quit(e event) {
 	// Prevent other users the client has left
 	s.cs.broadcasting(
 		newEvent(
-			chaton.MsgType_MESSAGE,
+			chaton.MsgType_QUIT,
 			fmt.Sprintf("%s has left.", e.client.nick)+reason,
-			nil,
-			"*",
 		),
 	)
 
@@ -162,11 +156,9 @@ func (s *ChatonServer) quit(e event) {
 func (s *ChatonServer) action(e event) {
 	s.cs.broadcasting(
 		newEvent(
-			chaton.MsgType_MESSAGE,
+			chaton.MsgType_ME,
 			// Add the pseudo before the action
-			fmt.Sprintf("*%s %s*", e.client.nick, e.event.Msg.Content),
-			nil,
-			"*",
+			fmt.Sprintf("%s %s", e.client.nick, e.event.Msg.Content),
 		),
 	)
 }
@@ -178,7 +170,7 @@ func (s *ChatonServer) listUsers(e event) {
 	// Send only to the user who ask who is here
 	e.client.stream.Send(
 		&chaton.Event{
-			Type: chaton.MsgType_MESSAGE,
+			Type: chaton.MsgType_LIST,
 			Msg: &chaton.Msg{
 				Content: msg,
 			},
@@ -200,7 +192,7 @@ func (s *ChatonServer) clearStatus(e event) {
 func (s *ChatonServer) showStatus(e event) {
 	e.client.stream.Send(
 		&chaton.Event{
-			Type: chaton.MsgType_MESSAGE,
+			Type: chaton.MsgType_SHOW,
 			Msg: &chaton.Msg{
 				Content: "Current status: " + e.client.status,
 			},
