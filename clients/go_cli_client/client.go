@@ -161,7 +161,7 @@ func join(c chaton.ChatonClient) {
 }
 
 func colorize(c, s string) string {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
+	if colors {
 		return fmt.Sprintf(
 			"%s%s%s",
 			color.Colorize(c),
@@ -175,13 +175,26 @@ func colorize(c, s string) string {
 var host string = "localhost"
 var port int = 21617
 var uname string // User nick name
+var colors bool  // Display color
 
 func init() {
 	flag.StringVar(&host, "host", "localhost", "The host address of the server")
 	flag.IntVar(&port, "port", 21617, "The port of the server we connect to")
 	flag.StringVar(&uname, "username", "", "The nickname of the user")
 
+	var c string
+	flag.StringVar(&c, "colors", "auto", "enabled | disabled | auto")
+
 	flag.Parse()
+
+	// Check color flag
+	if c == "enabled" || (isatty.IsTerminal(os.Stdout.Fd()) && c == "auto") {
+		colors = true
+	} else if c == "disabled" || (!isatty.IsTerminal(os.Stdout.Fd()) && c == "auto") {
+		colors = false
+	} else {
+		log.Fatal("Value for color flag must be: enabled | disabled | auto")
+	}
 }
 
 func main() {
