@@ -22,7 +22,6 @@ server-ctn-run:
 server-ctn-restart: server-ctn-stop server-ctn-delete server-image server-ctn-run
 	@echo Container stopped, deleted, image rebuilded, container now running.
 
-
 # Stop contaner
 server-ctn-stop:
 	@docker stop chaton-server

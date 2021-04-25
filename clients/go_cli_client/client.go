@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-isatty"
+	"github.com/wsxiaoys/terminal/color"
 	"google.golang.org/grpc"
 
 	"github.com/keftcha/chaton/grpc/chaton"
@@ -48,10 +50,13 @@ func join(c chaton.ChatonClient) {
 
 			// Format time
 			now := time.Now()
+			colon := colorize("y", ":")
 			displayedTime := fmt.Sprintf(
-				"%02d\033[33m:\033[0m%02d\033[33m:\033[0m%02d",
+				"%02d%s%02d%s%02d",
 				now.Hour(),
+				colon,
 				now.Minute(),
+				colon,
 				now.Second(),
 			)
 
@@ -60,36 +65,44 @@ func join(c chaton.ChatonClient) {
 			content := recv.Msg.Content
 			switch recv.Type {
 			case chaton.MsgType_CONNECT:
-				author = "       \033[32m-->\033[0m"
+				arrow := colorize("g", "-->")
+				author = fmt.Sprintf("       %s", arrow)
 			case chaton.MsgType_SET_NICKNAME:
-				author = "        \033[35m--\033[0m"
+				dashdash := colorize("m", "--")
+				author = fmt.Sprintf("        %s", dashdash)
 			case chaton.MsgType_MESSAGE:
 				author = "@" + recv.Msg.Author
 			case chaton.MsgType_QUIT:
-				author = "       \033[31m<--\033[0m"
+				arrow := colorize("r", "<--")
+				author = fmt.Sprintf("       %s", arrow)
 			case chaton.MsgType_ME:
 				author = "*"
-				content = "\033[03m" + content + "\033[0m"
+				content = colorize("/", content)
 			case chaton.MsgType_LIST:
-				author = "        \033[35m--\033[0m"
+				dashdash := colorize("m", "--")
+				author = fmt.Sprintf("        %s", dashdash)
 				// New message content
 				c := ""
 				for i, l := range strings.Split(content, "\n") {
 					if i == 0 {
 						c += l
 					} else {
-						c += "\n                    \033[32m|\033[0m  " + l
+						pipe := colorize("g", "|")
+						c += fmt.Sprintf("\n                    %s  %s", pipe, l)
 					}
 				}
 				content = c
 			case chaton.MsgType_SHOW:
-				author = "        \033[35m--\033[0m"
+				dashdash := colorize("m", "--")
+				author = fmt.Sprintf("        %s", dashdash)
 			}
 
+			pipe := colorize("g", "|")
 			fmt.Printf(
-				"%s %10s \033[32m|\033[0m  %s\n",
+				"%s %10s %s  %s\n",
 				displayedTime,
 				author,
+				pipe,
 				content,
 			)
 		}
@@ -145,6 +158,18 @@ func join(c chaton.ChatonClient) {
 			return
 		}
 	}
+}
+
+func colorize(c, s string) string {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		return fmt.Sprintf(
+			"%s%s%s",
+			color.Colorize(c),
+			s,
+			color.Colorize("|"),
+		)
+	}
+	return s
 }
 
 var host string = "localhost"
