@@ -1,7 +1,13 @@
+.PHONY: chaton
+
+SERVER_PORT ?= 21617
+
 chaton:
 	@echo Chaton: Simple chat service using gRPC.
 
 ################################################## Server
+.PHONY: server-run server-image server-ctn-run server-ctn-restart server-ctn-stop server-ctn-delete
+
 # Run server localy
 server-run:
 	@go run ./server/*
@@ -13,9 +19,9 @@ server-image:
 # Run container
 server-ctn-run:
 	@if [ -f ./server/.env ]; then \
-		docker run --env-file ./server/.env -d --name chaton-server -p 21617:21617 chaton-server; \
+		docker run --env-file ./server/.env -d --name chaton-server -p $(SERVER_PORT):$(SERVER_PORT) chaton-server; \
 	else \
-		docker run -d --name chaton-server -p 21617:21617 chaton-server; \
+		docker run -d --name chaton-server -p $(SERVER_PORT):$(SERVER_PORT) chaton-server; \
 	fi
 
 # Restart the running container with a new builded version
@@ -31,6 +37,8 @@ server-ctn-delete:
 	@docker container rm chaton-server
 
 ################################################## Go cli client
+.PHONY: go-cli-client-run go-cli-client-build
+
 # Run client localy
 go-cli-client-run:
 	@go run ./clients/go_cli_client/*
