@@ -4,7 +4,9 @@ Simple chat service using gRPC.
 
 ## The service
 
-The gRPC service is described in `./proto/chaton.proto`
+The gRPC service is described in `./proto/chaton.proto`.
+
+To generate the Go gRPC code use the command `go generate`.
 
 ## The server
 
