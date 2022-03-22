@@ -1,13 +1,19 @@
 module github.com/keftcha/chaton
 
-go 1.15
+go 1.18
 
 require (
-	github.com/golang/protobuf v1.5.0
-	github.com/google/uuid v1.1.2
-	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0 // indirect
-	google.golang.org/grpc v1.36.1
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect
-	google.golang.org/protobuf v1.26.0
+	github.com/google/uuid v1.3.0
+	github.com/mattn/go-isatty v0.0.14
+	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0
+	google.golang.org/grpc v1.45.0
+	google.golang.org/protobuf v1.28.0
+)
+
+require (
+	github.com/golang/protobuf v1.5.2 // indirect
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20220322021311-435b647f9ef2 // indirect
 )

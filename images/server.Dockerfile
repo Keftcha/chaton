@@ -1,12 +1,11 @@
-FROM golang:1.16 as builder
+FROM golang:1.18 as builder
 
 WORKDIR /usr/src/chaton
 
 COPY ./server ./server
 COPY ./grpc ./grpc
 COPY go.mod .
-
-RUN go mod download
+COPY go.sum .
 
 WORKDIR /usr/src/chaton/server
 
