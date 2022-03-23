@@ -48,5 +48,6 @@ enum MsgType {
     // The message from the client is ignored
     SHOW = 8;
 
+    // Not implemented
     TO = 9; // Send message only visible by mentioned users
 }
