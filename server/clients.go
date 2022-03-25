@@ -25,7 +25,7 @@ func Broadcasting(cs Clients, e Event) {
 
 	for c := range cs {
 		if err := c.Stream.Send(e.Event); err != nil {
-			log.Printf("Err Sending event to Client `%+v` %s\n", c, err.Error())
+			log.Printf("Err Sending event to Client `%#v` %s\n", c, err.Error())
 		}
 	}
 }

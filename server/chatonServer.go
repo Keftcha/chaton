@@ -48,7 +48,7 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 			// Remove the client from our broadcast list
 			RemoveClient(s.cs, e.Client)
 
-			log.Printf("Err Receiving from stream `%+v` %s\n", e.Client, err.Error())
+			log.Printf("Err Receiving from stream `%#v` %s\n", e.Client, err.Error())
 
 			switch err {
 			case io.EOF:
