@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -46,6 +47,8 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 		if err != nil {
 			// Remove the client from our broadcast list
 			RemoveClient(s.cs, e.Client)
+
+			log.Printf("Err Receiving from stream `%+v` %s\n", e.Client, err.Error())
 
 			switch err {
 			case io.EOF:
