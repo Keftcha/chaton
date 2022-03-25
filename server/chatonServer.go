@@ -23,6 +23,7 @@ type ChatonServer struct {
 func newChatonServer() *ChatonServer {
 	s := &ChatonServer{
 		es: make(chan Event),
+		cs: make(Clients),
 	}
 	go s.dispatch()
 	return s

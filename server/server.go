@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Server started: " + lis.Addr().String())
+	log.Println("Server started: " + lis.Addr().String())
 
 	// Create and start the gRPC server
 	var opts []grpc.ServerOption
