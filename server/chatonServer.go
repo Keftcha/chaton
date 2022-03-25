@@ -63,7 +63,6 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 
 // dispatch recieved event
 func (s *ChatonServer) dispatch() {
-
 	// Loop on messages in channel
 	for e := range s.es {
 		// Switch on the Event
