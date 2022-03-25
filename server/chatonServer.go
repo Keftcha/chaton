@@ -43,11 +43,16 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	// Infinite loop that recieve messages
 	for {
 		in, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
 		if err != nil {
-			return err
+			// Remove the client from our broadcast list
+			RemoveClient(s.cs, e.Client)
+
+			switch err {
+			case io.EOF:
+				return nil
+			default:
+				return err
+			}
 		}
 
 		// Add the new message to the channel queue
