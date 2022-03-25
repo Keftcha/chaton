@@ -2,60 +2,55 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/keftcha/chaton/grpc/chaton"
 )
 
-// client represent a client connetion to the server
-type client struct {
-	stream chaton.Chaton_JoinServer
-	nick   string
-	status string
+// Client represent a client connetion to the server
+type Client struct {
+	Stream chaton.Chaton_JoinServer
+	Nick   string
+	Status string
 }
 
-// clients represente a slice of *Client
-type clients []*client
+// Clients represente connected client
+type Clients map[*Client]struct{}
 
-// broadcasting send the event to all clients
-func (cs *clients) broadcasting(e event) {
-	for _, c := range *cs {
-		// Put the sender name as the message author
-		e.event.Msg.Author = e.client.nick
-		// Remove client if there is an error sending him message
-		if err := c.stream.Send(e.event); err != nil {
-			cs.remove(e.client)
+// Broadcasting send the event to all clients
+func Broadcasting(cs Clients, e Event) {
+	// Put the sender name as the message author
+	e.Event.Msg.Author = e.Client.Nick
+
+	for c := range cs {
+		if err := c.Stream.Send(e.Event); err != nil {
+			log.Println(err)
 		}
 	}
 }
 
-// remove a client from our *Client slice
-func (cs *clients) remove(client *client) {
-	// Remove the client of our list
-	for i, c := range *cs {
-		if c == client {
-			*cs = append((*cs)[:i], (*cs)[i+1:]...)
-			break
-		}
-	}
+// RemoveClient a client from our *Client slice
+func RemoveClient(cs Clients, c *Client) {
+	delete(cs, c)
 }
 
-// add a client from our *Client slice
-func (cs *clients) add(client *client) {
-	*cs = append(*cs, client)
+// AddClient a client from our *Client slice
+func AddClient(cs Clients, c *Client) {
+	cs[c] = struct{}{}
 }
 
-// listClients and their status
-func (cs *clients) listClients() string {
-	lst := ""
-	for i, c := range *cs {
-		if i != 0 {
-			lst += "\n"
-		}
-		lst += fmt.Sprintf(
+// ListClients and their status
+func ListClients(cs Clients) string {
+	lst := make([]string, len(cs))
+	i := 0
+	for c := range cs {
+		lst[i] = fmt.Sprintf(
 			"- %s: %s",
-			c.nick,
-			c.status,
+			c.Nick,
+			c.Status,
 		)
+		i++
 	}
-	return lst
+	return strings.Join(lst, "\n")
 }

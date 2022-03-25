@@ -14,15 +14,15 @@ type ChatonServer struct {
 	chaton.UnimplementedChatonServer
 
 	// Events sended
-	es chan event
+	es chan Event
 	// Clients connected
-	cs clients
+	cs Clients
 }
 
 // newChatonServer create a new ChatonServer service
 func newChatonServer() *ChatonServer {
 	s := &ChatonServer{
-		es: make(chan event),
+		es: make(chan Event),
 	}
 	go s.dispatch()
 	return s
@@ -31,11 +31,11 @@ func newChatonServer() *ChatonServer {
 // Join implements the chaton interface
 func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 	// Initialise the client of the event
-	e := event{
-		client: &client{
-			stream: stream,
-			nick:   "",
-			status: "Online.",
+	e := Event{
+		Client: &Client{
+			Stream: stream,
+			Nick:   "",
+			Status: "Online.",
 		},
 	}
 
@@ -50,7 +50,7 @@ func (s *ChatonServer) Join(stream chaton.Chaton_JoinServer) error {
 		}
 
 		// Add the new message to the channel queue
-		e.event = in
+		e.Event = in
 		s.es <- e
 	}
 }
@@ -61,7 +61,7 @@ func (s *ChatonServer) dispatch() {
 	// Loop on messages in channel
 	for e := range s.es {
 		// Switch on the Event
-		switch e.event.Type {
+		switch e.Event.Type {
 		// A new client has arrived
 		case chaton.MsgType_CONNECT:
 			s.connect(e)
@@ -70,7 +70,7 @@ func (s *ChatonServer) dispatch() {
 			s.changeNick(e)
 		// Client send message
 		case chaton.MsgType_MESSAGE:
-			s.cs.broadcasting(e)
+			Broadcasting(s.cs, e)
 		// Client whant to leave us
 		case chaton.MsgType_QUIT:
 			s.quit(e)
@@ -94,81 +94,85 @@ func (s *ChatonServer) dispatch() {
 }
 
 // connect a client to the server and send him recieved events
-func (s *ChatonServer) connect(e event) {
+func (s *ChatonServer) connect(e Event) {
 	// Set the client name to the content of the message
-	if e.event.Msg != nil {
-		e.client.nick = e.event.Msg.Content
+	if e.Event.Msg != nil {
+		e.Client.Nick = e.Event.Msg.Content
 	} else {
 		id, _ := uuid.NewRandom()
-		e.client.nick = id.String()
+		e.Client.Nick = id.String()
 	}
 
 	// Add the client to our list
-	s.cs.add(e.client)
+	AddClient(s.cs, e.Client)
 
 	// Prevent other users that a new client has arrived
-	s.cs.broadcasting(
-		newEvent(
+	Broadcasting(
+		s.cs,
+		NewEventWithoutClient(
 			chaton.MsgType_CONNECT,
-			fmt.Sprintf("%s has joined.", e.client.nick),
+			fmt.Sprintf("%s has joined.", e.Client.Nick),
 		),
 	)
 }
 
 // changeNick name of a client
-func (s *ChatonServer) changeNick(e event) {
+func (s *ChatonServer) changeNick(e Event) {
 	// The new nickname is the content of the message
-	newNick := e.event.Msg.Content
+	newNick := e.Event.Msg.Content
 
 	// Prevent other users that the client has changed his nickname
-	s.cs.broadcasting(
-		newEvent(
+	Broadcasting(
+		s.cs,
+		NewEventWithoutClient(
 			chaton.MsgType_SET_NICKNAME,
-			fmt.Sprintf("%s is now known as %s", e.client.nick, newNick),
+			fmt.Sprintf("%s is now known as %s", e.Client.Nick, newNick),
 		),
 	)
 
 	// Change the nickname
-	e.client.nick = newNick
+	e.Client.Nick = newNick
 }
 
 // quit remove a connected client
-func (s *ChatonServer) quit(e event) {
+func (s *ChatonServer) quit(e Event) {
 	// Did the client let a reason
 	reason := ""
-	if e.event.Msg != nil {
-		reason = fmt.Sprintf(" (\"%s\")", e.event.Msg.Content)
+	if e.Event.Msg != nil {
+		reason = fmt.Sprintf(" (\"%s\")", e.Event.Msg.Content)
 	}
 
 	// Prevent other users the client has left
-	s.cs.broadcasting(
-		newEvent(
+	Broadcasting(
+		s.cs,
+		NewEventWithoutClient(
 			chaton.MsgType_QUIT,
-			fmt.Sprintf("%s has left.", e.client.nick)+reason,
+			fmt.Sprintf("%s has left.", e.Client.Nick)+reason,
 		),
 	)
 
 	// Remove the client of our list
-	s.cs.remove(e.client)
+	RemoveClient(s.cs, e.Client)
 }
 
 // action a client made
-func (s *ChatonServer) action(e event) {
-	s.cs.broadcasting(
-		newEvent(
+func (s *ChatonServer) action(e Event) {
+	Broadcasting(
+		s.cs,
+		NewEventWithoutClient(
 			chaton.MsgType_ME,
 			// Add the pseudo before the action
-			fmt.Sprintf("%s %s", e.client.nick, e.event.Msg.Content),
+			fmt.Sprintf("%s %s", e.Client.Nick, e.Event.Msg.Content),
 		),
 	)
 }
 
 // listUsers connected to the server
-func (s *ChatonServer) listUsers(e event) {
-	msg := s.cs.listClients()
+func (s *ChatonServer) listUsers(e Event) {
+	msg := ListClients(s.cs)
 
 	// Send only to the user who ask who is here
-	e.client.stream.Send(
+	e.Client.Stream.Send(
 		&chaton.Event{
 			Type: chaton.MsgType_LIST,
 			Msg: &chaton.Msg{
@@ -179,22 +183,22 @@ func (s *ChatonServer) listUsers(e event) {
 }
 
 // changeStatus let the user set his status
-func (s *ChatonServer) changeStatus(e event) {
-	e.client.status = e.event.Msg.Content
+func (s *ChatonServer) changeStatus(e Event) {
+	e.Client.Status = e.Event.Msg.Content
 }
 
 // clearStatus of the user
-func (s *ChatonServer) clearStatus(e event) {
-	e.client.status = "Online."
+func (s *ChatonServer) clearStatus(e Event) {
+	e.Client.Status = "Online."
 }
 
 // showStatus send the status to the client
-func (s *ChatonServer) showStatus(e event) {
-	e.client.stream.Send(
+func (s *ChatonServer) showStatus(e Event) {
+	e.Client.Stream.Send(
 		&chaton.Event{
 			Type: chaton.MsgType_SHOW,
 			Msg: &chaton.Msg{
-				Content: "Current status: " + e.client.status,
+				Content: "Current status: " + e.Client.Status,
 			},
 		},
 	)
