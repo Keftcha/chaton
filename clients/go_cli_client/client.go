@@ -153,6 +153,7 @@ func join(c chaton.ChatonClient) {
 
 		// Properly close client stream
 		if msg[0] == "/quit" {
+			// Wait a little to receive the server msg that we leave
 			time.Sleep(100 * time.Millisecond)
 			stream.CloseSend()
 			return
